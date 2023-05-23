@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Network Scan</title>
+    <style>
+        body {
+            background: black;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .matrix-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .matrix-background canvas {
+            display: block;
+        }
+
+        .button {
+            display: inline-block;
+            background-color: #000;
+            color: #00FF00;
+            padding: 15px 30px;
+            font-size: 20px;
+            border: 2px solid #00FF00;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .button:hover {
+            background-color: #00FF00;
+            color: black;
+        }
+
+        .button:focus {
+            box-shadow: 0 0 10px #00FF00;
+        }
+    </style>
+</head>
+<body>
+    <div class="matrix-background"></div>
+    <button class="button" onclick="runScan()">Run a Scan</button>
+    <script>
+        function createMatrixBackground() {
+            var matrixBackground = document.querySelector(".matrix-background");
+            var canvas = document.createElement("canvas");
+            var ctx = canvas.getContext("2d");
+            var width = window.innerWidth;
+            var height = window.innerHeight;
+            var columns = width / 20;
+            var matrix = [];
+
+            canvas.width = width;
+            canvas.height = height;
+            matrixBackground.appendChild(canvas);
+
+            for (var i = 0; i < columns; i++) {
+                matrix[i] = 1;
+            }
+
+            function draw() {
+                ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+                ctx.fillRect(0, 0, width, height);
+
+                ctx.fillStyle = "#00FF00";
+                ctx.font = "15px 'Courier New', monospace";
+
+                for (var i = 0; i < columns; i++) {
+                    var text = Math.floor(Math.random() * 2);
+                    ctx.fillText(text, i * 20, matrix[i] * 20);
+
+                    if (matrix[i] * 20 > height && Math.random() > 0.975) {
+                        matrix[i] = 0;
+                    }
+
+                    matrix[i]++;
+                }
+            }
+
+            function animate() {
+                draw();
+                setTimeout(function() {
+                    requestAnimationFrame(animate);
+                }, 45); // Adjust the delay (in milliseconds) if needed
+            }
+
+            animate();
+        }
+
+        function runScan() {
+            window.location.href = "nmapscan/scanResults.html";
+            setTimeout(function() {
+                var xhr = new XMLHttpRequest();
+                xhr.open("GET", "https://api.ipify.org?format=json", true);
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 4 && xhr.status === 200) {
+                        var response = JSON.parse(xhr.responseText);
+                        var ipAddress = response.ip;
+                        var url = "nmap.sh?ip=" + encodeURIComponent(ipAddress);
+
+                        var scanXHR = new XMLHttpRequest();
+                        scanXHR.open("GET", url, true);
+                        scanXHR.onreadystatechange = function() {
+                            if (scanXHR.readyState === 4 && scanXHR.status === 200) {
+                                console.log("Script executed successfully");
+                                // Additional logic or actions after the script execution
+                            }
+                        };
+                        scanXHR.send();
+                    }
+                };
+                xhr.send();
+            }, 1000); // Adjust the delay if needed
+        }
+
+        createMatrixBackground();
+    </script>
+</body>
+</html>
+
